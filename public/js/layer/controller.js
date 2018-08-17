@@ -1441,9 +1441,9 @@ app.controller('layerCtrl', function ($scope,$rootScope,connection,$routeParams,
     };
 
 
-    $scope.deleteCollection = function(collection)
+    $scope.deleteCollection = function(deletedCollection)
     {
-        var theCollectionID = collection.collectionID;
+        var theCollectionID = deletedCollection.collectionID;
 
         deleteAllCollectionJoins(theCollectionID);
 
@@ -1453,13 +1453,15 @@ app.controller('layerCtrl', function ($scope,$rootScope,connection,$routeParams,
 
         for (var c in $scope._Layer.params.schema)
         {
-            if ($scope._Layer.params.schema[c].collectionID == theCollectionID)
+            var collection = $scope._Layer.params.schema[c];
+            if (collection.collectionID == theCollectionID)
             {
 
-                for (var element in $scope._Layer.params.schema[c].elements)
+                for (var e in collection.elements)
                 {
-                    instance.deleteEndpoint($scope._Layer.params.schema[c].elements[element].elementID);
-                    instance.deleteEndpoint($scope._Layer.params.schema[c].elements[element].elementID);
+                    var element = collection.elements[e];
+                    instance.deleteEndpoint(element.elementID + "LeftMiddle");
+                    instance.deleteEndpoint(element.elementID + "RightMiddle");
                 }
                 $scope._Layer.params.schema.splice(c, 1);
             }
