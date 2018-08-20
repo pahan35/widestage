@@ -151,6 +151,24 @@ app.controller('layerCtrl', function ($scope,$rootScope,connection,$routeParams,
             };
 */
 
+    var instance;
+
+    $scope.initJsPlumbIfNeed = function () {
+        if (typeof instance === "undefined") {
+            instance = jsPlumb.getInstance({
+                // default drag options
+                Endpoint: ["Dot", {radius: 2}],
+
+                DragOptions: {cursor: 'pointer', zIndex: 2000},
+                // the overlays to decorate each connection with.  note that the label overlay uses a function to generate the label text; in this
+                // case it returns the 'labelText' member that we set on each connection in the 'init' method below.
+                ConnectionOverlays: [],
+
+                Container: "canvas"
+            });
+        }
+    }
+
     var connectorPaintStyle = {
                     lineWidth: 4,
                     strokeStyle: "#61B7CF",
@@ -206,6 +224,9 @@ app.controller('layerCtrl', function ($scope,$rootScope,connection,$routeParams,
                     ]
                 },
                  _addEndpoints = function (toId, sourceAnchors, targetAnchors) {
+
+                    $scope.initJsPlumbIfNeed();
+
                     for (var i = 0; i < sourceAnchors.length; i++) {
                         var sourceUUID = toId + sourceAnchors[i];
 
@@ -213,6 +234,7 @@ app.controller('layerCtrl', function ($scope,$rootScope,connection,$routeParams,
                             anchor: sourceAnchors[i], uuid: sourceUUID
                         });
                     }
+
                     for (var j = 0; j < targetAnchors.length; j++) {
                         var targetUUID = toId + targetAnchors[j];
 
@@ -735,27 +757,13 @@ app.controller('layerCtrl', function ($scope,$rootScope,connection,$routeParams,
         }
     }
 
-    var instance;
-
     $scope.erDiagramInit = function() {
 
         if (!$scope.initiated) {
 
         //this timeout is here to give time to angular to create the element's divs'
         setTimeout(function () {
-              instance = jsPlumb.getInstance({
-                // default drag options
-                Endpoint: ["Dot", {radius: 2}],
-
-                DragOptions: { cursor: 'pointer', zIndex: 2000 },
-                // the overlays to decorate each connection with.  note that the label overlay uses a function to generate the label text; in this
-                // case it returns the 'labelText' member that we set on each connection in the 'init' method below.
-                ConnectionOverlays: [
-
-                ],
-
-                Container: "canvas"
-            });
+            $scope.initJsPlumbIfNeed();
 
             var rightJoinType = {
                 connector: "StateMachine",
@@ -809,58 +817,6 @@ app.controller('layerCtrl', function ($scope,$rootScope,connection,$routeParams,
                     fillStyle: "#000000",
                     strokeStyle: "#000000"    //strokeStyle: "#216477"
                 },
-
-            // the definition of source endpoints (the small blue ones)
-                sourceEndpoint = {
-                    endpoint: "Dot",
-                    paintStyle: {
-                        strokeStyle: "#7AB02C",
-                        fillStyle: "transparent",
-                        radius: 6,
-                        lineWidth: 3
-                    },
-                    isSource: true,
-                    connector: [ "Flowchart", { stub: [40, 60], gap: 10, cornerRadius: 5, alwaysRespectStubs: true } ],
-                    connectorStyle: connectorPaintStyle,
-                    hoverPaintStyle: endpointHoverStyle,
-                    connectorHoverStyle: connectorHoverStyle,
-                    maxConnections: -1,
-                    dragOptions: {},
-
-                    overlays: [
-                        [ "Label", {
-                            location: [0.5, 1.5],
-                            label: "",
-                            cssClass: "endpointSourceLabel"
-                        } ]
-                    ]
-                },
-            // the definition of target endpoints (will appear when the user drags a connection)
-                targetEndpoint = {
-                    endpoint: "Dot",
-                    paintStyle: { fillStyle: "#7AB02C", radius: 6 },
-                    hoverPaintStyle: endpointHoverStyle,
-                    maxConnections: -1,
-                    dropOptions: { hoverClass: "hover", activeClass: "active" },
-                    isTarget: true,
-                    overlays: [
-                        [ "Label", { location: [0.5, -0.5], label: "", cssClass: "endpointTargetLabel" } ]
-                    ]
-                },
-                 _addEndpoints = function (toId, sourceAnchors, targetAnchors) {
-                    for (var i = 0; i < sourceAnchors.length; i++) {
-                        var sourceUUID = toId + sourceAnchors[i];
-
-                        instance.addEndpoint( toId, sourceEndpoint, {
-                            anchor: sourceAnchors[i], uuid: sourceUUID
-                        });
-                    }
-                    for (var j = 0; j < targetAnchors.length; j++) {
-                        var targetUUID = toId + targetAnchors[j];
-
-                        instance.addEndpoint( toId, targetEndpoint, { anchor: targetAnchors[j], uuid: targetUUID });
-                    }
-                 },
                 init = function (connection) {
                     //connection.getOverlay("label").setLabel(connection.sourceId.substring(15) + "-" + connection.targetId.substring(15));
                 };
@@ -870,41 +826,40 @@ app.controller('layerCtrl', function ($scope,$rootScope,connection,$routeParams,
             // suspend drawing and initialise.
             instance.batch(function () {
 
-
-/************
-
                 for (var collection in $scope._Layer.params.schema)
                 {
-                    for (var element in $scope._Layer.params.schema[collection].elements)
-                    {
-                        if (!$scope._Layer.params.schema[collection].elements[element].painted || $scope._Layer.params.schema[collection].elements[element].painted == false)
-                        {
-                            _addEndpoints($scope._Layer.params.schema[collection].elements[element].elementID, [ "RightMiddle"], ["LeftMiddle"]);
-                            $scope._Layer.params.schema[collection].elements[element].painted = true;
-                        }
-
-
-                    }
+                    $scope.addPins($scope._Layer.params.schema[collection])
                 }
-                ***************/
 
-                /*****************/
+
                 instance.makeSource(jtkField, {
                     filter:"a",
                     filterExclude:true,
-                    connector: [ "Flowchart", { stub: [60, 60], gap: 0, cornerRadius: 5, alwaysRespectStubs: true } ],
-                            connectorStyle: connectorPaintStyle,
-                            hoverPaintStyle: endpointHoverStyle,
-                            connectorHoverStyle: connectorHoverStyle,
+                    endpoint: "Dot",
+                    paintStyle: {
+                        strokeStyle: "#7AB02C",
+                        fillStyle: "transparent",
+                        radius: 6,
+                        lineWidth: 3
+                    },
+                    isSource: true,
+                    connector: ["Flowchart", {stub: [40, 60], gap: 10, cornerRadius: 5, alwaysRespectStubs: true}],
+                    connectorStyle: connectorPaintStyle,
+                    hoverPaintStyle: endpointHoverStyle,
+                    connectorHoverStyle: connectorHoverStyle,
                     maxConnections: -1,
-                    //endpoint:[ "Rectangle", { width: 10, cssClass:"small-blue" } ],
-                    anchor:["LeftMiddle","RightMiddle"]
+                    dragOptions: {},
+                    anchor: ["RightMiddle"],
                 });
 
                 instance.makeTarget(jtkField, {
+                    deleteEndpointsOnDetach:false,
+                    paintStyle: { fillStyle: "#7AB02C", radius: 6 },
+                    hoverPaintStyle: endpointHoverStyle,
                     dropOptions: { hoverClass: "hover" },
-                    anchor:["LeftMiddle","RightMiddle"]
-                    //endpoint: "Dot"
+                    anchor:["LeftMiddle"],
+                    isTarget: true,
+                    endpoint: "Dot"
                     //endpoint:[ "Dot", { radius: 10, cssClass:"large-green" } ]
                 });
 
@@ -978,7 +933,7 @@ app.controller('layerCtrl', function ($scope,$rootScope,connection,$routeParams,
 /*****************/
                 for (var j in $scope._Layer.params.joins)
                 {
-                    var c = instance.connect({ source: $scope._Layer.params.joins[j].targetElementID, target: $scope._Layer.params.joins[j].sourceElementID,id: $scope._Layer.params.joins[j].joinID });
+                    var c = instance.connect({ source: $scope._Layer.params.joins[j].sourceElementID, target: $scope._Layer.params.joins[j].targetElementID,id: $scope._Layer.params.joins[j].joinID });
 
                     if ($scope._Layer.params.joins[j].joinType == 'left')
                         c.setType("left");
@@ -1724,12 +1679,12 @@ app.controller('layerCtrl', function ($scope,$rootScope,connection,$routeParams,
 
                         if (result.result == 1)
                         {
-                            for (i in result.items)
+                            for (var i in result.items)
                             {
                                 result.items[i].datasourceID = datasourceID;
                                 $scope.selectedDts.id = datasourceID;
 
-                                for (e in result.items[i].elements)
+                                for (var e in result.items[i].elements)
                                 {
                                     result.items[i].elements[e].datasourceID = datasourceID;
                                     result.items[i].elements[e].collectionID = result.items[i].collectionID;
@@ -1744,21 +1699,7 @@ app.controller('layerCtrl', function ($scope,$rootScope,connection,$routeParams,
 
                                 $scope._Layer.params.schema.push(result.items[i]);
 
-                                setTimeout(function () {
-
-                                for (var element in result.items[i].elements)
-                                    {
-                                        if (!result.items[i].elements[element].painted || result.items[i].elements[element].painted == false)
-                                        {
-                                            _addEndpoints(result.items[i].elements[element].elementID, [ "RightMiddle"], ["LeftMiddle"]);
-                                        }
-
-
-                                    }
-                                    var targetID = '#'+result.items[i].collectionID+'-parent';
-                                    setDraggable(".window");
-
-                                },100);
+                                setTimeout(function () { $scope.addPins(result.items[i]) },100);
 
                             }
                         $scope.erDiagramInit();
@@ -1770,6 +1711,17 @@ app.controller('layerCtrl', function ($scope,$rootScope,connection,$routeParams,
 
 
 
+    }
+
+    $scope.addPins = function(table) {
+        for (var element in table.elements)
+        {
+            if (!table.elements[element].painted || table.elements[element].painted == false)
+            {
+                _addEndpoints(table.elements[element].elementID, [ "RightMiddle"], ["LeftMiddle"]);
+            }
+        }
+        setDraggable(".window");
     }
 
     $scope.deleteObject = function(object,objectType)
