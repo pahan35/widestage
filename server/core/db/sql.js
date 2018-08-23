@@ -636,25 +636,26 @@ function processCollections(req,query,collections, dataSource, params, thereAreJ
                     {
                         var elementID = 'wst'+field.elementID.toLowerCase();
                         var theElementID = elementID.replace(/[^a-zA-Z ]/g,'');
+                        var fieldName = table.collectionID + '.`' + field.elementName + '`';
 
 
                         if (field.aggregation) {
                             found = true;
                             switch (field.aggregation) {
-                                case 'sum': fields.push('SUM('+table.collectionID+'.'+field.elementName+')'+ ' as '+theElementID+'sum');
+                                case 'sum': fields.push('SUM('+fieldName+')'+ ' as '+theElementID+'sum');
                                     break;
-                                case 'avg': fields.push('AVG('+table.collectionID+'.'+field.elementName+')'+ ' as '+theElementID+'avg');
+                                case 'avg': fields.push('AVG('+fieldName+')'+ ' as '+theElementID+'avg');
                                     break;
-                                case 'min': fields.push('MIN('+table.collectionID+'.'+field.elementName+')'+ ' as '+theElementID+'min');
+                                case 'min': fields.push('MIN('+fieldName+')'+ ' as '+theElementID+'min');
                                     break;
-                                case 'max': fields.push('MAX('+table.collectionID+'.'+field.elementName+')'+ ' as '+theElementID+'max');
+                                case 'max': fields.push('MAX('+fieldName+')'+ ' as '+theElementID+'max');
                                     break;
-                                case 'count': fields.push('COUNT('+table.collectionID+'.'+field.elementName+')'+ ' as '+theElementID+'count');
+                                case 'count': fields.push('COUNT('+fieldName+')'+ ' as '+theElementID+'count');
                             }
                         } else {
-                            fields.push(table.collectionID+'.'+field.elementName + ' as '+theElementID);
+                            fields.push(fieldName + ' as '+theElementID);
                             if (dataSource.type != 'BIGQUERY')
-                                groupBy.push(table.collectionID+'.'+field.elementName);
+                                groupBy.push(fieldName);
                                 else
                                 groupBy.push(theElementID);
                         }
